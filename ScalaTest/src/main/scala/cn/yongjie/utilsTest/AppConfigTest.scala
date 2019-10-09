@@ -23,14 +23,14 @@ object AppConfigTest {
     app.conf 中存在 %s的format，通过string.format进行还原
      */
 
-//    val ossPath = config.getString("oss.oss_path")
-//
-//    def getOssPath(ossPath: String, oem: String, carType: String):String = {
-//
-//      String.format(ossPath, oem, carType)
-//    }
-//
-//    println(getOssPath(ossPath, "BAIC", "C53F"))
+    val ossPath = config.getString("oss.oss_path")
+
+    def getOssPath(ossPath: String, oem: String, carType: String):String = {
+
+      String.format(ossPath, oem, carType)
+    }
+
+    println(getOssPath(ossPath, "BAIC", "C53F"))
 
   }
 }
