@@ -9,14 +9,9 @@ import com.alibaba.fastjson.serializer.SerializerFeature
 import org.apache.spark.rdd.RDD
 import org.apache.spark.mllib.linalg.{Matrix, Vector, Vectors}
 import org.apache.spark.mllib.linalg.distributed.RowMatrix
+import org.apache.spark.mllib.stat.Statistics
 
 object ALSRecomend {
-
-  val spark = SparkSession
-    .builder()
-    .master("local[4]")
-    .appName("MoiveRecom")
-    .getOrCreate()
 
   def parseMovie(lines: String): Movie = {
 
@@ -42,8 +37,11 @@ object ALSRecomend {
 
   def saveUserWatchedMovieToRedis(ratingRDD: RDD[MyRating]): Unit = {
 
-    RedisUtils.init(AppConfig.redisHost, AppConfig.redisPort, AppConfig.redisTimeout,
-      AppConfig.redisPassword, AppConfig.redisDatabase)
+    RedisUtils.init(AppConfig.redisHost,
+                    AppConfig.redisPort,
+                    AppConfig.redisTimeout,
+                    AppConfig.redisPassword,
+                    AppConfig.redisDatabase)
 
     val jedis = RedisUtils.getJedis
 
@@ -63,32 +61,49 @@ object ALSRecomend {
 
   def createALSModel(ratingRDD: RDD[MyRating]): Unit = {
 
-    RedisUtils.init(AppConfig.redisHost, AppConfig.redisPort, AppConfig.redisTimeout,
-      AppConfig.redisPassword, AppConfig.redisDatabase)
-
-    val jedis = RedisUtils.getJedis
+//    RedisUtils.init(AppConfig.redisHost,
+//                    AppConfig.redisPort,
+//                    AppConfig.redisTimeout,
+//                    AppConfig.redisPassword,
+//                    AppConfig.redisDatabase)
+//
+//    val jedis = RedisUtils.getJedis
 
     val model: MatrixFactorizationModel = new ALS()
-      .setIterations(10)
+      .setIterations(2)
       .setRank(10)
       .setLambda(0.01)
       .run(ratingRDD.map(myRating => myRating.rating))
 
     //analysis similarity of each movie
-    val movieSim = model.productFeatures
-      .sortByKey(true)
+    val movieSim:RDD[Vector] = model.productFeatures
+      .sortByKey()
       .map(x => Vectors.dense(x._2))
-    val matrixSim = new RowMatrix(movieSim)
-    val covariance: Matrix = matrixSim.computeCovariance()
-    println("covariance row number" + covariance.numRows + " columns number " + covariance.numCols)
+    val matrxSim = new RowMatrix(movieSim)
+    val corr = Statistics.corr(movieSim)
+    println(corr)
+
+
+//    val movieSim = model.productFeatures
+//      .sortByKey()
+//      .map(x => Vectors.dense(x._2))
+//    val matrixSim = new RowMatrix(movieSim)
+//    val covariance: Matrix = matrixSim.computeCovariance()
+//    println("covariance row number" + covariance.numRows + " columns number " + covariance.numCols)
 
 
 
-    jedis.close()
+//    jedis.close()
 
   }
 
   def batchOperation(): Unit = {
+
+    val spark = SparkSession
+      .builder()
+      .master("local[4]")
+      .appName("MoiveRecom")
+      .getOrCreate()
 
     val ratingRDD: RDD[MyRating] = spark
       .sparkContext
@@ -96,7 +111,7 @@ object ALSRecomend {
       .map(parseRating).cache()
 
     // save userId-MoviesList
-    saveUserWatchedMovieToRedis(ratingRDD)
+//    saveUserWatchedMovieToRedis(ratingRDD)
 
     // get similarity of movies
     createALSModel(ratingRDD)
