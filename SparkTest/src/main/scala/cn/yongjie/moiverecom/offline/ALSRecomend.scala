@@ -11,6 +11,8 @@ import org.apache.spark.mllib.linalg.{Matrix, Vector, Vectors}
 import org.apache.spark.mllib.linalg.distributed.RowMatrix
 import org.apache.spark.mllib.stat.Statistics
 
+import scala.collection.mutable
+
 object ALSRecomend {
 
   def parseMovie(lines: String): Movie = {
@@ -73,26 +75,49 @@ object ALSRecomend {
       .setIterations(2)
       .setRank(10)
       .setLambda(0.01)
-      .run(ratingRDD.map(myRating => myRating.rating))
+      .run(ratingRDD.map(myRating => myRating.rating).sample(false, 0.001))
 
     //analysis similarity of each movie
     val movieSim:RDD[Vector] = model.productFeatures
       .sortByKey()
       .map(x => Vectors.dense(x._2))
-    val matrxSim = new RowMatrix(movieSim)
-    val corr = Statistics.corr(movieSim)
-    println(corr)
+    val movieId = model.productFeatures.sortByKey().map(_._1).collect()
+
+    var movieIdMap = new mutable.HashMap[Int, Int]
+    for (i <- 0 until movieId.length) {
+      movieIdMap.put(i, movieId(i))
+    }
+//    println(movieIdMap.toList.sortBy(_._1))
+
+    val count = movieSim.count()
+
+    val corrRes = movieSim.cartesian(movieSim)
+      .map(x =>{
+        val movie01 = x._1;
+        val movie02 = x._2;
+        getCollaborateSource(movie01, movie02)
+      }).collect()
+
+    val arr = Array.ofDim[Double](count.toInt, count.toInt)
+
+    for (i <- 0 until count.toInt) {
+      for (j <- 0 until count.toInt) {
+        val num = i * count + j
+        arr(i)(j) = corrRes(num.toInt)
+      }
+    }
 
 
-//    val movieSim = model.productFeatures
-//      .sortByKey()
-//      .map(x => Vectors.dense(x._2))
-//    val matrixSim = new RowMatrix(movieSim)
-//    val covariance: Matrix = matrixSim.computeCovariance()
-//    println("covariance row number" + covariance.numRows + " columns number " + covariance.numCols)
+    for (i <- 0 until arr.length) {
+      val simArr = arr(i)
+      val movieId = movieIdMap.get(i).get
+      val key = "UU-" + movieId
+      val sim5MovieId = getTop5SimMovieId(simArr, movieIdMap)
+      println(key + "top5 movieId: " + sim5MovieId)
+//      jedis.set(key, JSON.toJSONString(sim5MovieId, SerializerFeature.PrettyFormat))
+    }
 
-
-
+//    println(arr.foreach(x => println(x.mkString(","))))
 //    jedis.close()
 
   }
@@ -116,6 +141,26 @@ object ALSRecomend {
     // get similarity of movies
     createALSModel(ratingRDD)
 
+  }
+
+  def getCollaborateSource(movie01: Vector, movie02:Vector): Double ={
+
+    val numerator = movie01.toArray.zip(movie02.toArray).map(x => x._1 * x._2).sum.toDouble
+    val movie01Var = movie01.toArray.map(x => math.pow(x, 2)).reduce(_ + _).toDouble
+    val movie02Var = movie02.toArray.map(x => math.pow(x, 2)).sum.toDouble
+    val corr = numerator / (math.sqrt(movie01Var) + math.sqrt(movie02Var))
+    corr
+  }
+
+  def getTop5SimMovieId(corrArr: Array[Double], movieIdMap: mutable.HashMap[Int, Int]): Unit = {
+
+    val tempId = corrArr.zip(Array.range(0, corrArr.length)).sortBy(_._1).reverse.map(_._2).take(5)
+    val movieId = new Array[Int](5)
+    for (i <- 0 until 5) {
+      movieId(i) = movieIdMap.get(tempId(i)).get
+    }
+    println(movieId.mkString(","))
+    movieId
   }
 
 }
