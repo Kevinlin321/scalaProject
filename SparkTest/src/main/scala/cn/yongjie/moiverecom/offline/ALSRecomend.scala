@@ -39,6 +39,37 @@ object ALSRecomend {
 
   def saveUserWatchedMovieToRedis(ratingRDD: RDD[MyRating]): Unit = {
 
+
+
+
+
+    // get moives the user have seen and store the results to redis with key equals "UI-UserId"
+    ratingRDD
+      .map(myRating => (myRating.rating.user, myRating.rating.product))
+      .groupByKey()
+      .foreachPartition(it => {
+
+        RedisUtils.init(AppConfig.redisHost,
+          AppConfig.redisPort,
+          AppConfig.redisTimeout,
+          AppConfig.redisPassword,
+          AppConfig.redisDatabase)
+        val jedis = RedisUtils.getJedis
+
+        for (item <- it) {
+          val userId = item._1.toString
+          val key = "UI-" + userId
+          val movieList = item._2.toArray[Int]
+          jedis.set(key, JSON.toJSONString(movieList, SerializerFeature.PrettyFormat))
+        }
+        jedis.close()
+      })
+
+
+  }
+
+  def createALSModel(ratingRDD: RDD[MyRating]): Unit = {
+
     RedisUtils.init(AppConfig.redisHost,
                     AppConfig.redisPort,
                     AppConfig.redisTimeout,
@@ -47,35 +78,12 @@ object ALSRecomend {
 
     val jedis = RedisUtils.getJedis
 
-    // get moives the user have seen and store the results to redis with key equals "UI-UserId"
-    ratingRDD
-      .map(myRating => (myRating.rating.user, myRating.rating.product))
-      .groupByKey()
-      .map(item => {
-        val userId = item._1.toString
-        val key = "UI-" + userId
-        val movieList = item._2.toArray[Int]
-        jedis.set(key, JSON.toJSONString(movieList, SerializerFeature.PrettyFormat))
-      })
-
-    jedis.close()
-  }
-
-  def createALSModel(ratingRDD: RDD[MyRating]): Unit = {
-
-//    RedisUtils.init(AppConfig.redisHost,
-//                    AppConfig.redisPort,
-//                    AppConfig.redisTimeout,
-//                    AppConfig.redisPassword,
-//                    AppConfig.redisDatabase)
-//
-//    val jedis = RedisUtils.getJedis
-
     val model: MatrixFactorizationModel = new ALS()
       .setIterations(2)
       .setRank(10)
       .setLambda(0.01)
-      .run(ratingRDD.map(myRating => myRating.rating).sample(false, 0.001))
+      .run(ratingRDD.map(myRating => myRating.rating))
+    //.sample(false, 0.001)
 
     //analysis similarity of each movie
     val movieSim:RDD[Vector] = model.productFeatures
@@ -93,8 +101,8 @@ object ALSRecomend {
 
     val corrRes = movieSim.cartesian(movieSim)
       .map(x =>{
-        val movie01 = x._1;
-        val movie02 = x._2;
+        val movie01 = x._1
+        val movie02 = x._2
         getCollaborateSource(movie01, movie02)
       }).collect()
 
@@ -113,8 +121,8 @@ object ALSRecomend {
       val movieId = movieIdMap.get(i).get
       val key = "UU-" + movieId
       val sim5MovieId = getTop5SimMovieId(simArr, movieIdMap)
-      println(key + "top5 movieId: " + sim5MovieId)
-//      jedis.set(key, JSON.toJSONString(sim5MovieId, SerializerFeature.PrettyFormat))
+//      println(key + "top5 movieId: " + sim5MovieId.mkString(","))
+      jedis.set(key, JSON.toJSONString(sim5MovieId, SerializerFeature.PrettyFormat))
     }
 
 //    println(arr.foreach(x => println(x.mkString(","))))
@@ -136,7 +144,7 @@ object ALSRecomend {
       .map(parseRating).cache()
 
     // save userId-MoviesList
-//    saveUserWatchedMovieToRedis(ratingRDD)
+    saveUserWatchedMovieToRedis(ratingRDD)
 
     // get similarity of movies
     createALSModel(ratingRDD)
@@ -152,7 +160,7 @@ object ALSRecomend {
     corr
   }
 
-  def getTop5SimMovieId(corrArr: Array[Double], movieIdMap: mutable.HashMap[Int, Int]): Unit = {
+  def getTop5SimMovieId(corrArr: Array[Double], movieIdMap: mutable.HashMap[Int, Int]): Array[Int] = {
 
     val tempId = corrArr.zip(Array.range(0, corrArr.length)).sortBy(_._1).reverse.map(_._2).take(5)
     val movieId = new Array[Int](5)

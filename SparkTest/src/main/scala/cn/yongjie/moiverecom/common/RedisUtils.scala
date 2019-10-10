@@ -4,7 +4,7 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig
 import redis.clients.jedis.{Jedis, JedisPool}
 import redis.clients.util.Pool
 
-object RedisUtils {
+object RedisUtils extends Serializable {
 
   private[this] var jedisPool: Pool[Jedis] = _
 
@@ -42,6 +42,5 @@ object RedisUtils {
     value
   }
 
-  //clse
 
 }
