@@ -57,7 +57,7 @@ object RealTimeRecommend {
 
     val kafkaParams = Map[String, String](
       "bootstrap.servers" -> AppConfig.kafkaBroker,
-      "auto.offset.reset" -> "largest",
+      "auto.offset.reset" -> "smallest",
       "enable.auto.commit" -> "false",
       "group.id" -> AppConfig.kafkaGroup
     )
