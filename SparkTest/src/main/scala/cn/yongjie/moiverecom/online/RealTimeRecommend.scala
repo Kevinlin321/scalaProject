@@ -39,11 +39,11 @@ object RealTimeRecommend {
 
   def createContext(): Unit = {
 
-    val conf = new SparkConf().setMaster("local[*]").setAppName("MovieRecom")
+    val conf = new SparkConf().setMaster("local[4]").setAppName("MovieRecom")
     conf.set("spark.streaming.kafka.maxRatePerPartition", "8000")
     conf.set("spark.streaming.stopGracefullyOnShutdown", "true")
     conf.set("spark.streaming.backpressure.enabled", "true")
-    conf.set("spark.locality.wait", "100")
+    conf.set("spark.locality.wait", "10")
 
     val ssc: StreamingContext = new StreamingContext(conf, Seconds(5))
 

@@ -1,8 +1,9 @@
 package cn.yongjie.boschDataParse
 
+import org.apache.log4j.{Level, Logger}
 import org.apache.spark.sql._
-import org.apache.spark.sql.types.{DoubleType, LongType, IntegerType, TimestampType}
-import org.apache.spark.sql.functions.{col, lag, lead, bround, sum, count}
+import org.apache.spark.sql.types.{DoubleType, IntegerType, LongType, TimestampType}
+import org.apache.spark.sql.functions.{bround, col, count, lag, lead, sum}
 import org.apache.spark.sql.expressions.Window
 //import org.slf4j.{Logger, LoggerFactory}
 import scala.sys.process._
@@ -17,6 +18,8 @@ object App {
 
   def main(args: Array[String]): Unit = {
 
+    Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
+
     if (isParseData) {
 
       val spark: SparkSession = SparkSession
@@ -25,9 +28,6 @@ object App {
         .master("local[3]")
         .appName("BoschAnalysis")
         .getOrCreate()
-
-
-
 
 //      val df: DataFrame = spark
 //        .read
@@ -70,8 +70,6 @@ object App {
 
   }
 
-
-  //
   def getCarSpeedAndGearBoxData(df: DataFrame, spark: SparkSession): Unit = {
 
     val dfSpeedGearBox = df
@@ -81,7 +79,6 @@ object App {
       .withColumn("gearBoxLead", lead("gearBox", 1, 0).over(Window.partitionBy("vin").orderBy("ts")))
       .select("vin", "timestamp", "carSpeed", "gearBoxLead")
       .where("carSpeed is not null")
-
 
 //    dfSpeedGearBox
 //      .coalesce(1)
