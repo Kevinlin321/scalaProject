@@ -19,19 +19,23 @@ object RealTimeRecommend {
 
   def sendSimClickEventToKafka(): Unit = {
 
-    var clickList: List[ClickEventSim] = Nil
+//    var clickList: List[ClickEventSim] = Nil
+//
+//    val click01 = ClickEventSim(1233, 456)
+//    val click02 = ClickEventSim(109, 232)
+//    val click03 = ClickEventSim(374, 272)
+//
+//    clickList = clickList :+ click01 :+ click02 :+ click03
+//    println(clickList)
+//
+//    for (click <- clickList) {
+//      println(click)
+//      MyKafkaUtils.sent(JSON.toJSONString(click, SerializerFeature.PrettyFormat))
+//    }
 
-    val click01 = ClickEventSim(1233, 456)
-    val click02 = ClickEventSim(109, 232)
-    val click03 = ClickEventSim(374, 272)
-
-    clickList = clickList :+ click01 :+ click02 :+ click03
-    println(clickList)
-
-    for (click <- clickList) {
-      println(click)
-      MyKafkaUtils.sent(JSON.toJSONString(click, SerializerFeature.PrettyFormat))
-    }
+    MyKafkaUtils.sent("1233_456")
+    MyKafkaUtils.sent("109_232")
+    MyKafkaUtils.sent("374_272")
 
     MyKafkaUtils.close()
   }
@@ -58,7 +62,7 @@ object RealTimeRecommend {
     val kafkaParams = Map[String, String](
       "bootstrap.servers" -> AppConfig.kafkaBroker,
       "auto.offset.reset" -> "smallest",
-      "enable.auto.commit" -> "false",
+//      "enable.auto.commit" -> "false",
       "group.id" -> AppConfig.kafkaGroup
     )
 
@@ -69,6 +73,8 @@ object RealTimeRecommend {
       kafkaParams,
       topicSet)
 
+//    message.print(30)
+
 //    message.map(_._2)
 //      .map(event => JSON.parseObject(event, classOf[ClickEventSim]))
 //      .foreachRDD(rdd => {
@@ -78,9 +84,12 @@ object RealTimeRecommend {
 
     import scala.collection.JavaConversions._
 
-    message.map(_._2).map{event =>
-      JSON.parseObject(event, classOf[ClickEventSim])
-    }.mapPartitions{ iter =>{
+    message.map(_._2).filter(str => str.contains("_"))
+      .map(event =>{
+      val userId = event.split("_")(0)
+      val movieId = event.split("_")(1)
+      (userId, movieId)
+    }).mapPartitions(iter =>{
 
       RedisUtils.init(AppConfig.redisHost,
         AppConfig.redisPort,
@@ -88,20 +97,43 @@ object RealTimeRecommend {
         AppConfig.redisPassword,
         AppConfig.redisDatabase)
       val jedis = RedisUtils.getJedis
-      iter.map{event =>{
 
-        val userId = event.userId
-        val movieId = event.movieId
+      iter.map{pair =>{
+        val userId = pair._1
+        val movieId = pair._2
         val seenMovies: util.List[Integer] = JSON.parseArray(jedis.get("UI-" + userId), classOf[Integer])
         println(seenMovies)
         val simMovies: util.List[Integer] = JSON.parseArray(jedis.get("UU-" + movieId), classOf[Integer])
         println(simMovies)
         val recom = recommendTop10Movies(seenMovies, simMovies)
-        println(recom)
+        println(recom.mkString(","))
         recom
-      }}
-    }
-    }.print()
+      }}}).print()
+
+//    message.map(_._2).map{event =>
+//      JSON.parseObject(event, classOf[ClickEventSim])
+//    }.mapPartitions{ iter =>{
+//
+//      RedisUtils.init(AppConfig.redisHost,
+//        AppConfig.redisPort,
+//        AppConfig.redisTimeout,
+//        AppConfig.redisPassword,
+//        AppConfig.redisDatabase)
+//      val jedis = RedisUtils.getJedis
+//      iter.map{event =>{
+//
+//        val userId = event.userId
+//        val movieId = event.movieId
+//        val seenMovies: util.List[Integer] = JSON.parseArray(jedis.get("UI-" + userId), classOf[Integer])
+//        println(seenMovies)
+//        val simMovies: util.List[Integer] = JSON.parseArray(jedis.get("UU-" + movieId), classOf[Integer])
+//        println(simMovies)
+//        val recom = recommendTop10Movies(seenMovies, simMovies)
+//        println(recom)
+//        recom
+//      }}
+//    }
+//    }.print()
 
     ssc.start()
     ssc.awaitTermination()
