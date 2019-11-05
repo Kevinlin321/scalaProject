@@ -1,0 +1,2 @@
+2019-11-02 13:12:49 [ main:63191 ] - [ ERROR ] java.net.SocketTimeoutException: connect timed out
+2019-11-02 13:12:49 [ main:63192 ] - [ ERROR ] https://restapi.amap.com/v3/place/text?&key=dbc1529a1066f76b1de1cfa985d90c51&keywords=4s店&types=&city=130637&children=0&offset=20&page=1&extensions=base

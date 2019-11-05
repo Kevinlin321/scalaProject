@@ -1,0 +1,3 @@
+citycode: 当前使用的citycode
+citycode_all: 所有的城市码
+citycode_100000: 根据types=100000（中华人民共和国）求得的citycode

@@ -18,55 +18,57 @@ object App {
 
   def main(args: Array[String]): Unit = {
 
-    Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
-
-    if (isParseData) {
-
-      val spark: SparkSession = SparkSession
-        .builder()
-        .config("spark.debug.maxToStringFields", "200")
-        .master("local[3]")
-        .appName("BoschAnalysis")
-        .getOrCreate()
-
-//      val df: DataFrame = spark
-//        .read
-//        .option("mergeSchema", "true")
-//        .option("basePath", AppConfig.getInputPath)
-//        .parquet(AppConfig.getInputPath)
-//        //.where("ts is not null")
-//        .select(
-//          col("vin"),
-//          col("ts").cast(LongType).as("ts"),
-//          col("timestamp").cast(TimestampType).as("timestamp"),
-//          col("lat").cast(DoubleType).as("lat"),
-//          col("lon").cast(DoubleType).as("lon"),
-//          col("carSpeed").cast(DoubleType).as("carSpeed"),
-//          col("intakeTemperatureSize").cast(DoubleType).as("intakeTemperatureSize"),
-//          col("meterInstantaneousFuelConsumption").cast(DoubleType).as("meterInstantaneousFuelConsumption"),
-//          col("drivingCycleMileage").cast(LongType)./(1000).as("drivingCycleMileage"),
-//          col("drivingCycleFlag").cast(IntegerType).as("drivingCycleFlag"),
-//          col("engineSpeed").cast(DoubleType).as("engineSpeed"),
-//          col("gearBox").cast(IntegerType).as("gearBox"),
-//          col("coolWaterTemp").cast(DoubleType).as("coolWaterTemp"))
 
 
-//      verifyAccIntegrateEqualZero(df,spark)
-//      calculateSpeedAndAcc(df)
-//      getCoolWaterTemperature(df)
-//      getCarSpeedAndGearBoxData(df, spark)
-//      calcTemperature(df)
-//      calcFuelConsumption(df)
-//      calcSpeed(df)
-//      calcAccelerate(df)
-//      calcDrivingDistancePerDay(df, spark)
-//      calcDrivingTimeAndDistancePerTrip(df, spark)
-//      calEngineSpeed(df)
-//      calGearBox(df)
-
-    }else{
-      plotFigure("speed")
-    }
+//    Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
+//
+//    if (isParseData) {
+//
+//      val spark: SparkSession = SparkSession
+//        .builder()
+//        .config("spark.debug.maxToStringFields", "200")
+//        .master("local[3]")
+//        .appName("BoschAnalysis")
+//        .getOrCreate()
+//
+////      val df: DataFrame = spark
+////        .read
+////        .option("mergeSchema", "true")
+////        .option("basePath", AppConfig.getInputPath)
+////        .parquet(AppConfig.getInputPath)
+////        //.where("ts is not null")
+////        .select(
+////          col("vin"),
+////          col("ts").cast(LongType).as("ts"),
+////          col("timestamp").cast(TimestampType).as("timestamp"),
+////          col("lat").cast(DoubleType).as("lat"),
+////          col("lon").cast(DoubleType).as("lon"),
+////          col("carSpeed").cast(DoubleType).as("carSpeed"),
+////          col("intakeTemperatureSize").cast(DoubleType).as("intakeTemperatureSize"),
+////          col("meterInstantaneousFuelConsumption").cast(DoubleType).as("meterInstantaneousFuelConsumption"),
+////          col("drivingCycleMileage").cast(LongType)./(1000).as("drivingCycleMileage"),
+////          col("drivingCycleFlag").cast(IntegerType).as("drivingCycleFlag"),
+////          col("engineSpeed").cast(DoubleType).as("engineSpeed"),
+////          col("gearBox").cast(IntegerType).as("gearBox"),
+////          col("coolWaterTemp").cast(DoubleType).as("coolWaterTemp"))
+//
+//
+////      verifyAccIntegrateEqualZero(df,spark)
+////      calculateSpeedAndAcc(df)
+////      getCoolWaterTemperature(df)
+////      getCarSpeedAndGearBoxData(df, spark)
+////      calcTemperature(df)
+////      calcFuelConsumption(df)
+////      calcSpeed(df)
+////      calcAccelerate(df)
+////      calcDrivingDistancePerDay(df, spark)
+////      calcDrivingTimeAndDistancePerTrip(df, spark)
+////      calEngineSpeed(df)
+////      calGearBox(df)
+//
+//    }else{
+//      plotFigure("speed")
+//    }
 
   }
 
@@ -449,6 +451,7 @@ object App {
     println(res)
 
   }
+
 
 
   //get city code from Gaode Map through gps location

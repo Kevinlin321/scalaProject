@@ -1,5 +1,6 @@
 package cn.yongjie.utilsTest
 
+import com.alibaba.fastjson.serializer.SerializerFeature
 import com.alibaba.fastjson.{JSON, JSONObject}
 
 object FastJsonTest {
@@ -9,23 +10,27 @@ object FastJsonTest {
     /*
     get json object
      */
-    val json01 = new JSONObject()
-    val json02 = new JSONObject()
-    json01.put("1", "111")
-    json01.put("2", json02)
-    json02.put("3", "333")
-    json02.put("4", "444")
-    println(json01.toJSONString)
+//    val json01 = new JSONObject()
+//    val json02 = new JSONObject()
+//    json01.put("1", "111")
+//    json01.put("2", json02)
+//    json02.put("3", "333")
+//    json02.put("4", "444")
+//    println(json01.toJSONString)
 
 
     /*
     parse json object
      */
-    val str = """{"1":"222", "2":"333"}"""
+//    val str = """{"1":"222", "2":"333"}"""
+//
+//    var jObj = JSON.parseObject(str)
+//    val str01 = jObj.getString("1")
+//    println(str01)
 
-    var jObj = JSON.parseObject(str)
-    val str01 = jObj.getString("1")
-    println(str01)
+    val student = Student(10, "abc")
+    println(JSON.toJSONString(student, SerializerFeature.PrettyFormat))
+
 
   }
 
