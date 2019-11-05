@@ -13,13 +13,13 @@ object APP {
 
   def main(args: Array[String]): Unit = {
 
-//    Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
+    Logger.getLogger("org.apache.spark").setLevel(Level.WARN)
 
     // batch handle
 //    ALSRecomend.batchOperation()
 
     // kafka producer send data to topic
-    //RealTimeRecommend.sendSimClickEventToKafka()
+//    RealTimeRecommend.sendSimClickEventToKafka()
 
     // kafka spark streaming
     RealTimeRecommend.createContext()
